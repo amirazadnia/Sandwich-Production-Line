@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sandwich Production Line – Cycle Time Game</title>
+<style>
+:root{--bg:#f6f1e7;--card:#ffffff;--ink:#111111;--line:#bcc7d1;--accent:#123b5d;--teal:#2f7f7a;--gold:#c98a20;--softblue:#edf4f8;--softgold:#fbf2dd;--softgreen:#edf6f0}
+*{box-sizing:border-box} body{margin:0;font-family:Calibri,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45}
+.wrap{max-width:1450px;margin:auto;padding:22px}.top,.card{background:var(--card);border:1px solid var(--line);border-radius:2px;box-shadow:none}
+.top{padding:22px;margin-bottom:16px;background:var(--accent);color:#ffffff;border-color:var(--accent)} h1{margin:0 0 8px;font-size:28px}.sub{color:#ffffff;font-weight:400}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-top:16px}.control select{width:150px}.control label{display:block;font-size:12px;font-weight:400;margin-bottom:5px;color:#ffffff}
+input,select,button{font:inherit;border:1px solid #9dafbd;border-radius:2px;padding:10px 12px;background:white;color:#111111;height:42px}
+input{width:150px;height:42px}button{cursor:pointer;font-weight:400}.primary{background:#ffffff;color:var(--accent);border-color:#ffffff;font-weight:600}.danger{color:#8b1e1e}
+.stats{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin:16px 0}.stat{background:white;border:1px solid var(--line);border-top:4px solid var(--teal);border-radius:2px;padding:13px}.stat small{color:#111111;font-weight:400}.stat b{display:block;font-size:23px;margin-top:4px;font-weight:600}
+.card{padding:18px;margin-bottom:16px}.line{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:22px;align-items:start;padding:12px 0 5px}
+.station-wrap{position:relative}.station{min-height:180px;border:2px solid #6f8798;border-radius:2px;background:var(--softblue);padding:12px;text-align:center;position:relative}
+.station.active{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}.station h3{margin:0 0 4px}.ptime{font-weight:400;color:#111111}.machine{height:54px;margin:7px 0 4px;border-radius:2px;background:var(--softgold);border:1px solid #d8b56a;display:flex;align-items:center;justify-content:center;font-size:26px}
+.current{font-size:12px;min-height:18px}.arrow{position:absolute;right:-22px;top:70px;width:22px;border-top:3px solid var(--teal)}.arrow:after{content:"";position:absolute;right:0;top:-6px;border-left:8px solid var(--teal);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.queue-title{margin-top:8px;font-size:11px;font-weight:700;color:#222222}.queue{min-height:56px;border:1px dashed #aab7c5;border-radius:2px;margin-top:4px;padding:6px;display:flex;gap:5px;align-items:center;overflow-x:auto;background:#ffffff}
+.queue.hot{background:#fff4d8;border:2px solid var(--gold)}.sand{min-width:39px;height:39px;border-radius:2px;background:#f6c453;border:1px solid #b78103;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;transition:all .3s ease;box-shadow:0 2px 4px #0002}
+.queue.hot .sand{animation:pulse 1s infinite alternate}@keyframes pulse{to{transform:translateY(-3px)}}
+.legend{font-size:13px;color:#222222;margin-top:10px}.note{background:#f8fbfd;border-left:4px solid var(--teal);padding:12px;border-radius:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.answers{display:none;background:#f7fbf8;border:1px solid #9fc4a8;border-radius:2px;padding:14px}.answers.show{display:block}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px;border-bottom:1px solid #e5e7eb;text-align:right}th:first-child,td:first-child{text-align:left}thead{background:#ffffff;position:sticky;top:0}.tablebox{max-height:360px;overflow:auto;border:1px solid #e5e7eb;border-radius:2px}
+.wait{color:#c2410c;font-weight:700}.done{color:#027a48;font-weight:700}.byline{margin-top:6px;color:#ffffff;font-size:13px}.insight{margin-top:12px;background:#fff7e8;border-left:4px solid var(--gold);padding:12px;border-radius:2px;line-height:1.5}.experiment{margin-top:14px;background:#f4f9f8;border:1px solid #9bbfbb;border-radius:2px;padding:14px;line-height:1.5}.experiment button{margin-top:8px}.expnote{margin-top:8px;color:#111111;font-size:13px}.footer{max-width:1450px;margin:0 auto 24px;padding:0 22px;text-align:center;color:#222222;font-size:12px;line-height:1.5}
+@media(max-width:950px){.line{grid-template-columns:1fr}.arrow{display:none}.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+ol li{font-weight:400;margin-bottom:8px}p{font-weight:400;color:#111111}.answers b,.insight b,.note b{font-weight:600}h1,h2,h3{font-weight:600;color:#111111}.top h1{color:#ffffff}.analysis-label{font-weight:600;color:#111111}.footer{color:#111111}.resourceCtl{display:flex;align-items:center;justify-content:center;gap:7px;margin:9px 0 5px;font-size:13px}.resourceCtl button{padding:2px 9px;min-width:30px;height:30px;background:#ffffff;border:1px solid #7f98aa;color:var(--accent);font-size:18px;line-height:1.1}.resourceCtl button:disabled{opacity:.4;cursor:not-allowed}.resCount{display:inline-block;min-width:22px;font-weight:600;color:var(--accent)}.machine + .machine{margin-top:5px}</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top">
+<h1>🥪 Sandwich Production Line</h1>
+<div class="byline">Designed by Dr Amir Azadnia, Maynooth University</div>
+<div class="sub">Observe the line, queues and completion pattern. Use the simulation to understand throughput time, cycle time, throughput, capacity and bottlenecks.</div>
+<div class="controls">
+ <div class="control"><label>Sandwiches to make</label><input id="count" type="number" min="1" max="100" value="10"></div>
+ <div class="control"><label>Animation speed</label><select id="speed"><option value="1">×1</option><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option><option value="40">×40</option></select></div>
+ <button class="primary" id="run">▶ Run Production</button><button id="pause">⏸ Pause</button><button class="danger" id="reset">↻ Reset</button>
+</div>
+</div>
+
+<div class="stats">
+ <div class="stat"><small>Simulation clock</small><b id="clock">0.0 s</b></div>
+ <div class="stat"><small>Released to line</small><b id="released">0</b></div>
+ <div class="stat"><small>Completed</small><b id="completed">0</b></div>
+ <div class="stat"><small>Current WIP</small><b id="wip">0</b></div>
+ <div class="stat"><small>Work content</small><b>142.5 s</b></div>
+ <div class="stat"><small>Average throughput efficiency</small><b id="avgEff">—</b></div>
+ <div class="stat"><small>Observed completion interval</small><b id="obsCycle">—</b></div>
+</div>
+
+<div class="card">
+<h2 style="margin-top:0">Production line</h2>
+<div class="note"><b>Release rule:</b> Order processing takes 30 seconds. Sandwich #1 starts at 0 s; subsequent sandwiches are released every 30 seconds. Watch where a persistent queue develops.</div>
+<div class="line" id="line"></div>
+<div class="legend">Each numbered yellow tile is one sandwich. Tiles physically advance through each station's waiting queue and into the machine when it becomes available. Orange queues indicate waiting WIP.</div>
+<div class="experiment">
+  <div>Capacity experiment: use the + / − controls at any station before running the line. Each added resource is an identical worker or machine operating in parallel.</div>
+  <div class="expnote">Try adding capacity to the bottleneck first, then to a non-bottleneck. Observe whether total output changes and whether the bottleneck moves.</div>
+</div>
+</div>
+
+<div class="card grid2">
+<div>
+<h2>Calculate from the simulation</h2>
+<ol>
+<li>What is the throughput time?</li>
+<li>What is the throughput efficiency?</li>
+<li>Which station is the bottleneck? Why?</li>
+<li>What is the cycle time?</li>
+<li>What is the capacity per hour?</li>
+<li>What throughput do you observe?</li>
+<li>Where and why does waiting/WIP develop?</li>
+</ol>
+</div>
+<div>
+<h2>Teacher / Reveal</h2>
+<button id="reveal">Reveal analysis</button>
+<div class="answers" id="answers">
+<p id="analysisBottleneck"></p>
+<p id="analysisCycle"></p>
+<p id="analysisCapacity"></p>
+<p><span class="analysis-label">Throughput time:</span> Sandwich 1 takes <b>142.5 sec</b> with no waiting. Later sandwiches take longer because waiting develops before Toast (e.g. #2 = 152.5 sec, #3 = 162.5 sec).</p>
+<p><span class="analysis-label">Throughput efficiency:</span> Work content ÷ throughput time × 100. Work content is 142.5 sec, so Sandwich 1 = 100.0%, Sandwich 2 ≈ 93.4%, Sandwich 3 ≈ 87.7%, and efficiency falls as waiting increases.</p>
+<p><span class="analysis-label">Steady-state throughput:</span> 1/40 sandwich/sec = <b>90 sandwiches/hour</b>.</p>
+<p><span class="analysis-label">Queue:</span> sandwiches reach Toast faster than Toast can process them. Waiting therefore accumulates immediately before Toast. The downstream Wrap station is fast enough relative to Toast and does not constrain output.</p>
+<div class="insight"><b>Insight:</b> The processing work required for each sandwich does not change, but waiting increases as the queue grows. This increases throughput time and reduces throughput efficiency. The queue therefore provides a visible signal of the bottleneck.</div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>Iteration Log</h2>
+<div class="tablebox"><table><thead><tr><th>Sandwich</th><th>Released</th><th>Completed</th><th>Throughput time</th><th>Throughput efficiency</th><th>Completion interval</th><th>Total waiting</th><th>Status</th></tr></thead><tbody id="log"></tbody></table></div>
+</div>
+</div>
+
+<div class="footer">
+  Sandwich Production Line Simulation<br>
+  Concept and teaching design: Dr Amir Azadnia, Maynooth University<br>
+  © 2026 Amir Azadnia. All rights reserved. For educational use only.
+  Redistribution, modification or republication without permission is prohibited.
+</div>
+
+<script>
+const defs=[
+ {name:"Order",time:30,icon:"🧾"},
+ {name:"Bread",time:15,icon:"🍞"},
+ {name:"Fill",time:20,icon:"🥬"},
+ {name:"Toast",time:40,icon:"🔥"},
+ {name:"Wrap/Deliver",time:37.5,icon:"📦"}
+];
+let sandwiches=[], stations=[], sim=0, running=false, paused=false, lastReal=null, raf=null, target=10, resources=[1,1,1,1,1];
+const line=document.getElementById("line");
+
+function buildLine(){
+ line.innerHTML="";
+ defs.forEach((d,i)=>{
+  let w=document.createElement("div"); w.className="station-wrap";
+  w.innerHTML=`<div class="station" id="st${i}">
+    <h3>${d.icon} ${d.name}</h3>
+    <div class="ptime">${d.time} sec/sandwich</div>
+    <div class="resourceCtl">
+      <button type="button" class="resBtn" data-i="${i}" data-d="-1">−</button>
+      <span>Resources</span>
+      <span class="resCount" id="res${i}">${resources[i]}</span>
+      <button type="button" class="resBtn" data-i="${i}" data-d="1">+</button>
+    </div>
+    <div id="machines${i}"></div>
+    <div class="current" id="cur${i}">Idle</div>
+  </div>
+  <div class="queue-title">Waiting queue (${i===0?"future releases":"before station"})</div>
+  <div class="queue" id="q${i}"></div>
+  ${i<defs.length-1?'<div class="arrow"></div>':''}`;
+  line.appendChild(w);
+ });
+}
+function reset(){
+ cancelAnimationFrame(raf); running=false;paused=false;setResourceButtonsEnabled(true);sim=0;lastReal=null;sandwiches=[];stations=defs.map((d,i)=>({servers:Array.from({length:resources[i]},()=>({job:null,end:0}))}));target=+document.getElementById("count").value||10;
+ for(let i=1;i<=target;i++) sandwiches.push({id:i,release:(i-1)*30,stage:-1,queuedAt:null,totalWait:0,start:null,complete:null,status:"Not released"});
+ buildLine(); render();
+}
+function enqueueReleased(){
+ sandwiches.forEach(s=>{
+  if(s.stage===-1 && s.release<=sim+1e-9){
+   s.stage=0;s.queuedAt=s.release;s.start=s.release;s.status="Waiting for Order";
+  }
+ });
+}
+function processEvents(){
+ let changed=true, guard=0;
+ while(changed && guard++<1000){
+  changed=false;
+  enqueueReleased();
+  // finish stations whose work has ended
+  stations.forEach((st,i)=>{
+   st.servers.forEach(server=>{
+    if(server.job && server.end<=sim+1e-9){
+     let s=server.job; server.job=null;
+     if(i===defs.length-1){s.complete=server.end;s.stage=defs.length;s.status="Completed";}
+     else{s.stage=i+1;s.queuedAt=server.end;s.status="Waiting for "+defs[i+1].name;}
+     changed=true;
+    }
+   });
+  });
+  // start earliest waiting sandwich at each free station
+  stations.forEach((st,i)=>{
+   st.servers.forEach(server=>{
+    if(!server.job){
+     let candidates=sandwiches.filter(s=>s.stage===i && s.queuedAt!==null && s.queuedAt<=sim+1e-9).sort((a,b)=>a.queuedAt-b.queuedAt||a.id-b.id);
+     if(candidates.length){
+      let s=candidates[0];
+      s.totalWait += Math.max(0, sim-s.queuedAt);
+      s.queuedAt=null;s.status="Processing at "+defs[i].name;
+      server.job=s;server.end=sim+defs[i].time;changed=true;
+     }
+    }
+   });
+  });
+ }
+}
+function nextEvent(){
+ let times=[];
+ sandwiches.forEach(s=>{if(s.stage===-1 && s.release>sim+1e-9)times.push(s.release)});
+ stations.forEach(st=>st.servers.forEach(server=>{if(server.job && server.end>sim+1e-9)times.push(server.end)}));
+ return times.length?Math.min(...times):null;
+}
+function tick(ts){
+ if(!running)return;
+ if(paused){lastReal=ts;raf=requestAnimationFrame(tick);return}
+ if(lastReal===null)lastReal=ts;
+ let mult=+document.getElementById("speed").value;
+ let advance=(ts-lastReal)/1000*mult; lastReal=ts;
+ let desired=sim+advance;
+ // move through exact discrete events so waiting times remain correct
+ let ev=nextEvent();
+ while(ev!==null && ev<=desired+1e-9){
+  sim=ev;processEvents();ev=nextEvent();
+ }
+ sim=desired; processEvents(); render();
+ if(sandwiches.filter(s=>s.complete!==null).length>=target){running=false;setResourceButtonsEnabled(true);render();return}
+ raf=requestAnimationFrame(tick);
+}
+function run(){
+ if(running){paused=false;return}
+ if(sandwiches.length===0 || sandwiches.every(s=>s.complete!==null)) reset();
+ running=true;paused=false;lastReal=null;setResourceButtonsEnabled(false);processEvents();render();raf=requestAnimationFrame(tick);
+}
+function fmt(v){return v===null||v===undefined?"—":v.toFixed(1)+" s"}
+function render(){
+ document.getElementById("clock").textContent=sim.toFixed(1)+" s";
+ let rel=sandwiches.filter(s=>s.release<=sim+1e-9).length, done=sandwiches.filter(s=>s.complete!==null);
+ document.getElementById("released").textContent=rel;document.getElementById("completed").textContent=done.length;
+ document.getElementById("wip").textContent=rel-done.length;
+ const WORK_CONTENT=142.5;
+ let effs=done.map(s=>WORK_CONTENT/(s.complete-s.release)*100);
+ document.getElementById("avgEff").textContent=effs.length?(effs.reduce((a,b)=>a+b,0)/effs.length).toFixed(1)+"%":"—";
+ let sorted=[...done].sort((a,b)=>a.complete-b.complete);
+ document.getElementById("obsCycle").textContent=sorted.length>1?(sorted.at(-1).complete-sorted.at(-2).complete).toFixed(1)+" s":"—";
+ stations.forEach((st,i)=>{
+  let box=document.getElementById("st"+i),cur=document.getElementById("cur"+i),q=document.getElementById("q"+i);
+  let machines=document.getElementById("machines"+i);
+   if(machines && machines.children.length!==resources[i]){
+    machines.innerHTML="";
+    for(let k=0;k<resources[i];k++){
+     let md=document.createElement("div");
+     md.className="machine";
+     md.id="machine"+i+"_"+k;
+     md.textContent="—";
+     machines.appendChild(md);
+    }
+   }
+   let rc=document.getElementById("res"+i); if(rc) rc.textContent=resources[i];
+   let busy=st.servers.filter(server=>!!server.job);
+  box.classList.toggle("active",busy.length>0);
+
+  st.servers.forEach((server,k)=>{
+   let mach=document.getElementById("machine"+i+"_"+k);
+   if(mach) mach.textContent=server.job?"🥪 #"+server.job.id:"—";
+  });
+
+  cur.textContent=busy.length
+   ? busy.map(server=>`#${server.job.id} • ${(Math.max(0,server.end-sim)).toFixed(1)} s left`).join(" | ")
+   : "Idle";
+
+  let qs=sandwiches.filter(s=>s.stage===i && s.queuedAt!==null && s.queuedAt<=sim+1e-9).sort((a,b)=>a.queuedAt-b.queuedAt||a.id-b.id);
+  q.innerHTML=qs.map(s=>`<div class="sand" title="Sandwich ${s.id}">#${s.id}</div>`).join("");
+  q.classList.toggle("hot",qs.length>0);
+ });
+ let tbody=document.getElementById("log");tbody.innerHTML="";
+ sandwiches.filter(s=>s.release<=sim+1e-9 || s.complete!==null).forEach(s=>{
+  let prev=sandwiches.find(x=>x.id===s.id-1), interval=(s.complete!==null&&prev&&prev.complete!==null)?s.complete-prev.complete:null;
+  let tr=document.createElement("tr");
+  let tt=s.complete!==null?(s.complete-s.release):null;
+   let eff=tt!==null?(142.5/tt*100):null;
+   tr.innerHTML=`<td><b>#${s.id}</b></td><td>${fmt(s.release)}</td><td>${fmt(s.complete)}</td><td>${tt!==null?fmt(tt):"—"}</td><td>${eff!==null?eff.toFixed(1)+"%":"—"}</td><td>${fmt(interval)}</td><td class="${s.totalWait>0?"wait":""}">${s.totalWait.toFixed(1)} s</td><td class="${s.complete!==null?"done":""}">${s.status}</td>`;
+  tbody.appendChild(tr);
+ });
+}
+
+function setResourceButtonsEnabled(enabled){
+ document.querySelectorAll(".resBtn").forEach(b=>b.disabled=!enabled);
+}
+
+function bindResourceButtons(){
+ document.querySelectorAll(".resBtn").forEach(b=>{
+  b.onclick=()=>{
+   if(running)return;
+   const i=+b.dataset.i, d=+b.dataset.d;
+   resources[i]=Math.max(1,Math.min(3,resources[i]+d));
+   reset();
+   if(typeof updateTeacherAnalysis==="function") updateTeacherAnalysis();
+  };
+ });
+}
+
+const originalBuildLine=buildLine;
+buildLine=function(){
+ originalBuildLine();
+ bindResourceButtons();
+};
+
+document.getElementById("run").onclick=run;
+document.getElementById("pause").onclick=()=>{paused=!paused;document.getElementById("pause").textContent=paused?"▶ Resume":"⏸ Pause"};
+document.getElementById("reset").onclick=reset;
+document.getElementById("count").onchange=reset;
+
+function updateTeacherAnalysis(){
+ const effectiveTimes=defs.map((d,i)=>d.time/resources[i]);
+ const maxTime=Math.max(...effectiveTimes);
+ const bottlenecks=defs.filter((d,i)=>Math.abs(effectiveTimes[i]-maxTime)<1e-9).map(d=>d.name);
+ const capacity=3600/maxTime;
+ const b=document.getElementById("analysisBottleneck");
+ if(!b)return;
+ b.innerHTML='<span class="analysis-label">Bottleneck:</span> '+bottlenecks.join(" and ")+' — effective station interval '+maxTime.toFixed(1)+' sec/sandwich.';
+ document.getElementById("analysisCycle").innerHTML='<span class="analysis-label">Cycle time:</span> '+maxTime.toFixed(1)+' sec/sandwich.';
+ document.getElementById("analysisCapacity").innerHTML='<span class="analysis-label">Capacity:</span> '+capacity.toFixed(1)+' sandwiches/hour.';
+}
+
+document.getElementById("reveal").onclick=()=>{updateTeacherAnalysis();document.getElementById("answers").classList.toggle("show");};
+
+
+buildLine();reset();
+</script>
+</body></html>
